@@ -1,0 +1,289 @@
+{
+  "meta": {
+    "name": "三角洲行动 专项规则包",
+    "version": "1.0.0",
+    "updated": "2026-11-10",
+    "schemaVersion": "2.0",
+    "description": "针对《三角洲行动》(Delta Force, PC) 的进程/模块/文件线索。命名类规则是启发式弱信号；真正判定依赖句柄/驱动/哈希/遥测。",
+    "categories": [
+      {
+        "id": "df.tool",
+        "name": "三角洲专项工具",
+        "weight": 1.2
+      },
+      {
+        "id": "df.name",
+        "name": "中文命名启发式",
+        "weight": 0.7
+      },
+      {
+        "id": "df.loader",
+        "name": "外挂加载器特征",
+        "weight": 1.1
+      }
+    ]
+  },
+  "rules": [
+    {
+      "id": "df.tool.name.zh",
+      "type": "process_name",
+      "pattern": "*三角洲*",
+      "match": "glob",
+      "category": "df.tool",
+      "severity": 3,
+      "confidence": 0.45,
+      "description": "进程名含「三角洲」且不是游戏本体（游戏本体在白名单里）",
+      "advice": "外挂常直接把游戏名写进工具名；仍可能误伤录屏/攻略工具，需看路径与签名"
+    },
+    {
+      "id": "df.tool.nameassist",
+      "type": "process_name",
+      "pattern": "*三角洲*辅助*",
+      "match": "glob",
+      "category": "df.tool",
+      "severity": 4,
+      "confidence": 0.6,
+      "description": "进程名同时含「三角洲」和「辅助」"
+    },
+    {
+      "id": "df.tool.namewallhack",
+      "type": "process_name",
+      "pattern": "*三角洲*透视*",
+      "match": "glob",
+      "category": "df.tool",
+      "severity": 4,
+      "confidence": 0.6,
+      "description": "进程名同时含「三角洲」和「透视」"
+    },
+    {
+      "id": "df.tool.nameaim",
+      "type": "process_name",
+      "pattern": "*三角洲*自瞄*",
+      "match": "glob",
+      "category": "df.tool",
+      "severity": 4,
+      "confidence": 0.6,
+      "description": "进程名同时含「三角洲」和「自瞄」"
+    },
+    {
+      "id": "df.tool.nameabbr",
+      "type": "process_name",
+      "pattern": "*DF*辅助*",
+      "match": "glob",
+      "category": "df.tool",
+      "severity": 3,
+      "confidence": 0.35,
+      "description": "进程名含 DF 缩写与「辅助」，疑似针对三角洲的工具"
+    },
+    {
+      "id": "df.name.zh.generic",
+      "type": "process_name",
+      "pattern": "*透视*",
+      "match": "glob",
+      "category": "df.name",
+      "severity": 2,
+      "confidence": 0.25,
+      "description": "进程名含「透视」（通用中文外挂命名，误报面大，仅作加权）"
+    },
+    {
+      "id": "df.name.zh.aim",
+      "type": "process_name",
+      "pattern": "*自瞄*",
+      "match": "glob",
+      "category": "df.name",
+      "severity": 2,
+      "confidence": 0.25,
+      "description": "进程名含「自瞄」（通用中文外挂命名）"
+    },
+    {
+      "id": "df.name.zh.lock",
+      "type": "process_name",
+      "pattern": "*锁头*",
+      "match": "glob",
+      "category": "df.name",
+      "severity": 2,
+      "confidence": 0.25,
+      "description": "进程名含「锁头」"
+    },
+    {
+      "id": "df.name.zh.wall",
+      "type": "process_name",
+      "pattern": "*穿墙*",
+      "match": "glob",
+      "category": "df.name",
+      "severity": 2,
+      "confidence": 0.25,
+      "description": "进程名含「穿墙」"
+    },
+    {
+      "id": "df.name.zh.box",
+      "type": "process_name",
+      "pattern": "*方框*",
+      "match": "glob",
+      "category": "df.name",
+      "severity": 2,
+      "confidence": 0.2,
+      "description": "进程名含「方框」（ESP 框类工具常见命名）"
+    },
+    {
+      "id": "df.loader.kmbox",
+      "type": "process_name",
+      "pattern": "*kmbox*",
+      "match": "glob",
+      "category": "df.loader",
+      "severity": 4,
+      "confidence": 0.55,
+      "description": "KMBox 类硬件鼠标模拟器配套软件"
+    },
+    {
+      "id": "df.loader.kmnet",
+      "type": "process_name",
+      "pattern": "*kmnet*",
+      "match": "glob",
+      "category": "df.loader",
+      "severity": 4,
+      "confidence": 0.5,
+      "description": "KMNet 类网络转发输入设备配套程序"
+    },
+    {
+      "id": "df.loader.aim",
+      "type": "process_name",
+      "pattern": "*aim*loader*",
+      "match": "glob",
+      "category": "df.loader",
+      "severity": 4,
+      "confidence": 0.5,
+      "description": "自瞄类加载器命名模式"
+    },
+    {
+      "id": "df.loader.injector",
+      "type": "process_name",
+      "pattern": "*injector*",
+      "match": "glob",
+      "category": "df.loader",
+      "severity": 3,
+      "confidence": 0.4,
+      "description": "注入器命名模式"
+    },
+    {
+      "id": "df.module.cheatdll",
+      "type": "module_name",
+      "pattern": "*deltaforce*cheat*.dll",
+      "match": "glob",
+      "category": "df.tool",
+      "severity": 5,
+      "confidence": 0.7,
+      "description": "进程加载了名称含 deltaforce+cheat 的模块"
+    },
+    {
+      "id": "df.module.dfhack",
+      "type": "module_name",
+      "pattern": "*df*hack*.dll",
+      "match": "glob",
+      "category": "df.tool",
+      "severity": 4,
+      "confidence": 0.5,
+      "description": "加载了名称含 df+hack 的模块"
+    },
+    {
+      "id": "df.file.zh",
+      "type": "file_name",
+      "pattern": "*三角洲*辅助*.exe",
+      "match": "glob",
+      "category": "df.tool",
+      "severity": 4,
+      "confidence": 0.5,
+      "description": "文件名同时含「三角洲」与「辅助」"
+    },
+    {
+      "id": "df.file.wall",
+      "type": "file_name",
+      "pattern": "*三角洲*透视*.exe",
+      "match": "glob",
+      "category": "df.tool",
+      "severity": 4,
+      "confidence": 0.5,
+      "description": "文件名同时含「三角洲」与「透视」"
+    },
+    {
+      "id": "df.file.ct",
+      "type": "file_name",
+      "pattern": "*.ct",
+      "match": "glob",
+      "category": "df.name",
+      "severity": 2,
+      "confidence": 0.3,
+      "description": "Cheat Engine 表文件（.ct），常见于数值修改与训练脚本"
+    },
+    {
+      "id": "df.file.kmboxdll",
+      "type": "file_name",
+      "pattern": "*kmbox*.dll",
+      "match": "glob",
+      "category": "df.loader",
+      "severity": 4,
+      "confidence": 0.5,
+      "description": "KMBox 类硬件输入模拟器的配套 DLL"
+    }
+  ],
+  "whitelist": {
+    "processes": [
+      {
+        "pattern": "DeltaForceClient*",
+        "match": "glob",
+        "reason": "游戏本体"
+      },
+      {
+        "pattern": "*DeltaForce*Shipping.exe",
+        "match": "glob",
+        "reason": "游戏本体（UE Shipping 进程）"
+      },
+      {
+        "pattern": "ACE-*",
+        "match": "glob",
+        "reason": "腾讯 ACE 反作弊组件"
+      },
+      {
+        "pattern": "SGuard*",
+        "match": "glob",
+        "reason": "ACE 安全组件"
+      },
+      {
+        "pattern": "WeGame*",
+        "match": "glob",
+        "reason": "WeGame 平台"
+      },
+      {
+        "pattern": "steam*",
+        "match": "glob",
+        "reason": "Steam 平台"
+      },
+      {
+        "pattern": "nvcontainer.exe",
+        "match": "exact",
+        "reason": "NVIDIA 容器"
+      }
+    ],
+    "paths": [
+      {
+        "pattern": "*\\Tencent\\*ACE*\\*",
+        "reason": "ACE 安装目录"
+      },
+      {
+        "pattern": "*\\WeGameApps\\*",
+        "reason": "WeGame 安装目录"
+      }
+    ],
+    "files": [],
+    "signers": [
+      {
+        "subjectContains": "Tencent Technology",
+        "reason": "腾讯签名组件"
+      },
+      {
+        "subjectContains": "Microsoft",
+        "reason": "微软签名"
+      }
+    ]
+  }
+}

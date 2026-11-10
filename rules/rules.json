@@ -1,0 +1,960 @@
+{
+  "meta": {
+    "name": "EagleEye 默认规则集",
+    "version": "1.8.0",
+    "updated": "2026-11-10",
+    "description": "进程/路径/模块/签名/文件名/哈希 六类规则 + DMA 段；分类用于报告分组与权重。",
+    "schemaVersion": "2.0",
+    "categories": [
+      {
+        "id": "tool.cheat",
+        "name": "作弊工具",
+        "description": "内存修改、透视、加速类工具",
+        "weight": 1.2
+      },
+      {
+        "id": "tool.debugger",
+        "name": "调试分析工具",
+        "description": "调试器/逆向工具，单独存在不构成作弊",
+        "weight": 1
+      },
+      {
+        "id": "tool.injector",
+        "name": "注入器",
+        "description": "远程注入类工具",
+        "weight": 1.3
+      },
+      {
+        "id": "path.anomaly",
+        "name": "路径异常",
+        "description": "从临时目录/下载目录/回收站启动",
+        "weight": 0.8
+      },
+      {
+        "id": "module.suspect",
+        "name": "可疑模块",
+        "description": "已加载模块名命中",
+        "weight": 1.2
+      },
+      {
+        "id": "signature",
+        "name": "签名异常",
+        "description": "Authenticode 校验不通过",
+        "weight": 1
+      },
+      {
+        "id": "file.suspect",
+        "name": "可疑文件",
+        "description": "文件名或哈希命中",
+        "weight": 1
+      },
+      {
+        "id": "dma.hardware",
+        "name": "DMA 外设",
+        "description": "PCIe 设备特征命中",
+        "weight": 1.1
+      }
+    ]
+  },
+  "options": {
+    "scanRoots": [
+      "%TEMP%",
+      "%USERPROFILE%\\Downloads",
+      "%APPDATA%"
+    ],
+    "includeExtensions": [
+      ".exe",
+      ".dll",
+      ".sys",
+      ".bat",
+      ".cmd",
+      ".ps1",
+      ".vbs"
+    ],
+    "maxFiles": 20000,
+    "maxDepth": 5,
+    "maxFileSizeBytes": 268435456,
+    "maxHashFiles": 3000
+  },
+  "rules": [
+    {
+      "id": "proc.cheatengine",
+      "type": "process_name",
+      "pattern": "cheatengine*",
+      "severity": 4,
+      "confidence": 0.9,
+      "description": "Cheat Engine 主程序在运行（内存扫描/调试工具）",
+      "advice": "单独存在不构成作弊，需结合端口、模块、签名等证据人工复核",
+      "category": "tool.cheat"
+    },
+    {
+      "id": "proc.cheatengine.aux",
+      "type": "process_name",
+      "pattern": "ce*trainer*",
+      "severity": 3,
+      "confidence": 0.6,
+      "description": "疑似 Cheat Engine 周边工具/修改器",
+      "category": "tool.cheat"
+    },
+    {
+      "id": "proc.debugger.x64dbg",
+      "type": "process_name",
+      "pattern": "x64dbg*",
+      "severity": 3,
+      "confidence": 0.7,
+      "description": "x64dbg 调试器在运行",
+      "category": "tool.debugger"
+    },
+    {
+      "id": "proc.debugger.ollydbg",
+      "type": "process_name",
+      "pattern": "ollydbg*",
+      "severity": 3,
+      "confidence": 0.7,
+      "description": "OllyDbg 调试器在运行",
+      "category": "tool.debugger"
+    },
+    {
+      "id": "proc.injector.generic",
+      "type": "process_name",
+      "pattern": "*inject*",
+      "severity": 3,
+      "confidence": 0.55,
+      "description": "进程名含 inject，疑似注入器",
+      "category": "tool.injector"
+    },
+    {
+      "id": "proc.speedhack",
+      "type": "process_name",
+      "pattern": "*speedhack*",
+      "severity": 4,
+      "confidence": 0.75,
+      "description": "变速齿轮类工具，常用于加速游戏动作",
+      "category": "tool.cheat"
+    },
+    {
+      "id": "path.user_temp",
+      "type": "process_path",
+      "pattern": "*\\AppData\\Local\\Temp\\*",
+      "severity": 2,
+      "confidence": 0.45,
+      "description": "程序从用户临时目录启动",
+      "category": "path.anomaly"
+    },
+    {
+      "id": "path.downloads",
+      "type": "process_path",
+      "pattern": "*\\Downloads\\*",
+      "severity": 2,
+      "confidence": 0.4,
+      "description": "程序从下载目录启动",
+      "category": "path.anomaly"
+    },
+    {
+      "id": "path.recycle_bin",
+      "type": "process_path",
+      "pattern": "*\\$Recycle.Bin\\*",
+      "severity": 4,
+      "confidence": 0.8,
+      "description": "程序从回收站启动，具备明显规避意图",
+      "category": "path.anomaly"
+    },
+    {
+      "id": "module.aimbot",
+      "type": "module_name",
+      "pattern": "aimbot*.dll",
+      "severity": 5,
+      "confidence": 0.85,
+      "description": "目标进程加载了名称含 aimbot 的模块",
+      "category": "module.suspect"
+    },
+    {
+      "id": "module.esp",
+      "type": "module_name",
+      "pattern": "esp*.dll",
+      "severity": 4,
+      "confidence": 0.7,
+      "description": "目标进程加载了名称含 esp 的模块（透视类命名）",
+      "category": "module.suspect"
+    },
+    {
+      "id": "module.cheat",
+      "type": "module_name",
+      "pattern": "*cheat*.dll",
+      "severity": 4,
+      "confidence": 0.6,
+      "description": "目标进程加载了名称含 cheat 的模块",
+      "category": "module.suspect"
+    },
+    {
+      "id": "sig.bad_digest",
+      "type": "signature",
+      "pattern": "bad_digest",
+      "severity": 5,
+      "confidence": 0.9,
+      "description": "数字签名摘要不匹配，文件在签名后被修改",
+      "category": "signature",
+      "advice": "签名摘要不匹配 = 文件在签名后被修改。常见良性原因：游戏平台/启动器自更新打补丁、安装包解压后重写。确认良性后按 suppressRules 定向加白（见 whitelist 示例）"
+    },
+    {
+      "id": "sig.untrusted_root",
+      "type": "signature",
+      "pattern": "untrusted_root",
+      "severity": 3,
+      "confidence": 0.6,
+      "description": "签名证书链不受信任（自签名或证书链断裂）",
+      "category": "signature"
+    },
+    {
+      "id": "sig.unsigned",
+      "type": "signature",
+      "pattern": "unsigned",
+      "severity": 2,
+      "confidence": 0.45,
+      "description": "可执行文件没有可验证的数字签名（既无内嵌签名也无目录签名）",
+      "category": "signature"
+    },
+    {
+      "id": "file.name.cheat",
+      "type": "file_name",
+      "pattern": "*cheat*",
+      "severity": 3,
+      "confidence": 0.5,
+      "description": "文件名含 cheat",
+      "category": "file.suspect"
+    },
+    {
+      "id": "file.name.speedhack",
+      "type": "file_name",
+      "pattern": "*speedhack*",
+      "severity": 4,
+      "confidence": 0.7,
+      "description": "文件名含 speedhack",
+      "category": "file.suspect"
+    },
+    {
+      "id": "file.hash.known",
+      "type": "file_hash",
+      "pattern": "placeholder",
+      "hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "severity": 5,
+      "confidence": 0.95,
+      "enabled": false,
+      "description": "已知恶意样本 SHA256 名单（示例占位，enabled=false；实际名单按样本沉淀补充）",
+      "category": "file.suspect"
+    }
+  ],
+  "whitelist": {
+    "processes": [
+      {
+        "pattern": "EagleEye*",
+        "match": "glob",
+        "reason": "本工具自身（含输出目录里的副本），整体放过"
+      },
+      {
+        "pattern": "explorer.exe",
+        "match": "exact",
+        "reason": "Windows 外壳"
+      },
+      {
+        "pattern": "MsMpEng.exe",
+        "match": "exact",
+        "reason": "Microsoft Defender 反恶意软件服务"
+      },
+      {
+        "pattern": "SearchIndexer.exe",
+        "match": "exact",
+        "reason": "Windows 搜索索引"
+      },
+      {
+        "pattern": "OBS*.exe",
+        "match": "glob",
+        "reason": "直播/录制软件，覆盖层合法"
+      },
+      {
+        "pattern": "Razer*",
+        "match": "glob",
+        "reason": "外设厂商软件",
+        "expires": "2027-01-01"
+      },
+      {
+        "pattern": "wegame_env.exe",
+        "match": "exact",
+        "reason": "WeGame 环境启动器自更新后签名摘要失效。取证(2026-11-10)：SHA256=c0644c06fa7457c0e7d5321f15d363782638d7207ab8115b76a5be785fbeefc5，11018072 字节，创建与修改同一时刻；PowerShell Get-AuthenticodeSignature 独立验证同为 HashMismatch；同目录 PerfOverlay.exe 签名正常。判定为官方更新器写入后未重签，定向抑制 sig.bad_digest，2027-02-01 到期需复核",
+        "suppressRules": [
+          "sig.bad_digest"
+        ],
+        "expires": "2027-02-01"
+      }
+    ],
+    "paths": [
+      {
+        "pattern": "C:\\Windows\\System32\\*",
+        "reason": "系统目录"
+      },
+      {
+        "pattern": "C:\\Windows\\SysWOW64\\*",
+        "reason": "系统目录"
+      }
+    ],
+    "files": [
+      {
+        "pattern": "*.tmp",
+        "reason": "临时文件不参与判定"
+      }
+    ],
+    "signers": [
+      {
+        "subjectContains": "Microsoft Windows",
+        "reason": "微软系统组件签名"
+      },
+      {
+        "subjectContains": "Microsoft Corporation",
+        "reason": "微软签名"
+      }
+    ]
+  },
+  "dma": {
+    "enabled": true,
+    "includeDeviceList": true,
+    "rules": [
+      {
+        "id": "dma.xilinx.vendor",
+        "vid": "10EE",
+        "vendor": "Xilinx",
+        "severity": 4,
+        "confidence": 0.55,
+        "description": "Xilinx FPGA 厂商设备，是常见 DMA 采集卡的载板芯片",
+        "advice": "单靠 VID 不足以定性：GPU 加速卡、开发板、采集卡也用同一厂商 ID，需结合驱动、位置、行为复核",
+        "category": "dma.hardware"
+      },
+      {
+        "id": "dma.xilinx.pid7024",
+        "vid": "10EE",
+        "pid": "7024",
+        "severity": 5,
+        "confidence": 0.75,
+        "vendor": "Xilinx",
+        "description": "Xilinx 7024 设备 ID，常见于市售 DMA 板卡",
+        "advice": "与设备类、驱动服务名、位置信息一起看，勿单独定性",
+        "category": "dma.hardware"
+      },
+      {
+        "id": "dma.lattice.vendor",
+        "vid": "1204",
+        "vendor": "Lattice",
+        "severity": 3,
+        "confidence": 0.45,
+        "description": "Lattice FPGA 厂商设备，亦被部分 DMA 固件使用",
+        "category": "dma.hardware"
+      },
+      {
+        "id": "dma.class.system.example",
+        "classCode": "06",
+        "severity": 1,
+        "confidence": 0.15,
+        "enabled": false,
+        "description": "示例：按近似 Class Code 匹配（06 = 桥/系统类）。默认关闭，因为误伤面极大",
+        "category": "dma.hardware"
+      },
+      {
+        "id": "dma.fpga.no_msi",
+        "vid": "10EE",
+        "severity": 3,
+        "confidence": 0.6,
+        "enabled": false,
+        "conditions": [
+          "msi_missing"
+        ],
+        "description": "Xilinx FPGA 设备没有 MSI 能力（需 --kernel 读取配置空间后才生效，默认关闭）",
+        "advice": "缺少 MSI 是低端 FPGA 板卡的常见特征，只能作辅助信号",
+        "category": "dma.hardware"
+      }
+    ],
+    "whitelist": [
+      {
+        "vid": "8086",
+        "reason": "Intel 芯片组 / 核显 / 网卡 / 雷电控制器"
+      },
+      {
+        "vid": "10DE",
+        "reason": "NVIDIA 显卡"
+      },
+      {
+        "vid": "1002",
+        "reason": "AMD 显卡"
+      },
+      {
+        "vid": "1022",
+        "reason": "AMD CPU 内部设备"
+      },
+      {
+        "vid": "1B21",
+        "reason": "ASMedia USB/SATA 控制器"
+      },
+      {
+        "vid": "15B8",
+        "reason": "常用主板 BMC / 桥片"
+      }
+    ],
+    "kernel": {
+      "enabled": false,
+      "serviceName": "PcieCfg",
+      "devicePath": "\\\\\\\\.\\\\PcieCfg",
+      "driverFileName": "PcieCfg.sys",
+      "timeoutMs": 5000
+    }
+  },
+  "vision": {
+    "enabled": true,
+    "capture": {
+      "enabled": true,
+      "moduleRules": [
+        {
+          "id": "vision.capture.onnxruntime",
+          "tier": "strong",
+          "pattern": "onnxruntime*.dll",
+          "match": "glob",
+          "category": "inference_runtime",
+          "severity": 2,
+          "confidence": 0.35,
+          "description": "进程拥有可见窗口且加载了 ONNX Runtime（AI 推理运行时）",
+          "advice": "装了 CUDA/ONNX 的开发机也会命中，需结合路径、签名与使用场景"
+        },
+        {
+          "id": "vision.capture.opencv",
+          "tier": "strong",
+          "pattern": "opencv_world*.dll",
+          "match": "glob",
+          "category": "cv_library",
+          "severity": 2,
+          "confidence": 0.3,
+          "description": "进程拥有可见窗口且加载了 OpenCV（含 dnn 模块的发行版）"
+        },
+        {
+          "id": "vision.capture.tensorrt",
+          "tier": "strong",
+          "pattern": "nvinfer*.dll",
+          "match": "glob",
+          "category": "inference_runtime",
+          "severity": 2,
+          "confidence": 0.35,
+          "description": "进程拥有可见窗口且加载了 TensorRT 推理库"
+        },
+        {
+          "id": "vision.capture.torch",
+          "tier": "strong",
+          "pattern": "torch_cpu.dll",
+          "match": "exact",
+          "category": "inference_runtime",
+          "severity": 2,
+          "confidence": 0.3,
+          "description": "进程拥有可见窗口且加载了 PyTorch CPU 运行时"
+        },
+        {
+          "id": "vision.capture.graphics_hook",
+          "tier": "strong",
+          "pattern": "graphics-hook*.dll",
+          "match": "glob",
+          "category": "capture_hook",
+          "severity": 3,
+          "confidence": 0.5,
+          "description": "进程加载了 OBS Game Capture 的注入模块（画面采集中）",
+          "advice": "直播/录屏同样会加载，需结合用户场景判断"
+        },
+        {
+          "id": "vision.capture.wgc",
+          "tier": "strong",
+          "pattern": "Windows.Graphics.Capture*.dll",
+          "match": "glob",
+          "category": "capture_client",
+          "severity": 2,
+          "confidence": 0.3,
+          "description": "进程加载了 Windows.Graphics.Capture 相关组件"
+        },
+        {
+          "id": "vision.context.gdi32",
+          "tier": "context",
+          "pattern": "gdi32*.dll",
+          "match": "glob",
+          "category": "capture_context",
+          "severity": 1,
+          "confidence": 0.05,
+          "description": "加载了 GDI（BitBlt 等画面捕获能力的载体）"
+        },
+        {
+          "id": "vision.context.dxgi",
+          "tier": "context",
+          "pattern": "dxgi.dll",
+          "match": "exact",
+          "category": "capture_context",
+          "severity": 1,
+          "confidence": 0.05,
+          "description": "加载了 DXGI（Desktop Duplication 的载体）"
+        },
+        {
+          "id": "vision.context.d3d11",
+          "tier": "context",
+          "pattern": "d3d11.dll",
+          "match": "exact",
+          "category": "capture_context",
+          "severity": 1,
+          "confidence": 0.05,
+          "description": "加载了 D3D11（GPU 侧画面处理的载体）"
+        }
+      ]
+    },
+    "hardware": {
+      "enabled": true,
+      "rules": [
+        {
+          "id": "vision.hw.elgato",
+          "category": "video_capture",
+          "vendorId": "0FD9",
+          "severity": 2,
+          "confidence": 0.4,
+          "description": "Elgato 视频采集设备（直播/双机采集均可能）"
+        },
+        {
+          "id": "vision.hw.avermedia",
+          "category": "video_capture",
+          "vendorId": "07CA",
+          "severity": 2,
+          "confidence": 0.4,
+          "description": "AVerMedia 视频采集设备"
+        },
+        {
+          "id": "vision.hw.magewell",
+          "category": "video_capture",
+          "vendorId": "2935",
+          "severity": 2,
+          "confidence": 0.4,
+          "description": "Magewell 视频采集设备（低延迟采集卡）"
+        },
+        {
+          "id": "vision.hw.blackmagic",
+          "category": "video_capture",
+          "vendorId": "1EDB",
+          "severity": 2,
+          "confidence": 0.4,
+          "description": "Blackmagic 视频采集设备"
+        },
+        {
+          "id": "vision.hw.arduino_hid",
+          "category": "hid_injector",
+          "vendorId": "2341",
+          "deviceClass": "HIDClass",
+          "severity": 3,
+          "confidence": 0.5,
+          "description": "Arduino 类开发板以 HID 输入设备形式枚举，常见于硬件宏/KMBox 类设备"
+        },
+        {
+          "id": "vision.hw.teensy",
+          "category": "hid_injector",
+          "vendorId": "16C0",
+          "deviceClass": "HIDClass",
+          "severity": 3,
+          "confidence": 0.5,
+          "description": "Teensy/PJRC 开发板以 HID 形式枚举"
+        },
+        {
+          "id": "vision.hw.ch340",
+          "category": "hid_injector",
+          "vendorId": "1A86",
+          "severity": 2,
+          "confidence": 0.35,
+          "description": "CH340/CH341 串口桥（常见于低成本 HID 模拟器）"
+        },
+        {
+          "id": "vision.hw.rp2040",
+          "category": "hid_injector",
+          "vendorId": "2E8A",
+          "deviceClass": "HIDClass",
+          "severity": 3,
+          "confidence": 0.5,
+          "description": "Raspberry Pi RP2040 开发板以 HID 形式枚举"
+        },
+        {
+          "id": "vision.hw.vigem",
+          "category": "input_mapper",
+          "service": "ViGEmBus",
+          "severity": 3,
+          "confidence": 0.5,
+          "description": "ViGEm 虚拟手柄总线（DS4Windows 等输入映射器依赖）"
+        },
+        {
+          "id": "vision.hw.hidhide",
+          "category": "input_mapper",
+          "service": "HidHide",
+          "severity": 3,
+          "confidence": 0.5,
+          "description": "HidHide 输入设备隐藏驱动"
+        },
+        {
+          "id": "vision.hw.interception",
+          "category": "input_mapper",
+          "service": "interception",
+          "severity": 3,
+          "confidence": 0.5,
+          "description": "Interception 键盘鼠标过滤驱动（输入重映射常用）"
+        }
+      ]
+    },
+    "behavior": {
+      "enabled": false,
+      "durationMs": 3000,
+      "sampleMs": 16,
+      "minSamples": 50,
+      "straightLineRatio": 0.85,
+      "constantVelocityRatio": 0.8,
+      "zeroDeltaRatio": 0.6
+    },
+    "whitelist": [
+      {
+        "processPattern": "nvcontainer.exe",
+        "match": "exact",
+        "reason": "NVIDIA 容器进程，可能加载推理相关组件"
+      },
+      {
+        "processPattern": "nvsphelper64.exe",
+        "match": "exact",
+        "reason": "NVIDIA 捕获辅助进程"
+      },
+      {
+        "vendorId": "046D",
+        "reason": "罗技外设"
+      },
+      {
+        "vendorId": "1532",
+        "reason": "雷蛇外设"
+      },
+      {
+        "vendorId": "1B1C",
+        "reason": "海盗船外设"
+      }
+    ],
+    "aggregation": {
+      "maxLevel": "可疑",
+      "requireIndependentLayers": 2
+    }
+  },
+  "deep": {
+    "handles": {
+      "enabled": true,
+      "rules": [
+        {
+          "id": "handle.game_process_access",
+          "category": "handle",
+          "targetProcessPattern": "*DeltaForce*",
+          "accessMaskAny": [
+            "0x10",
+            "0x20",
+            "0x2"
+          ],
+          "severity": 5,
+          "confidence": 0.7,
+          "description": "有进程以 VM_READ / VM_WRITE / CREATE_THREAD 打开了三角洲行动客户端进程",
+          "advice": "这是本机最强的作弊信号之一：除反作弊自身外，正常软件不应读取游戏内存"
+        },
+        {
+          "id": "handle.vm_read_remote",
+          "category": "handle",
+          "targetProcessPattern": "*DeltaForce*",
+          "accessMaskAny": [
+            "0x10"
+          ],
+          "severity": 3,
+          "confidence": 0.5,
+          "description": "进程以 VM_READ 打开了另一个进程（具备读取对方内存的能力）",
+          "advice": "调试器、杀软、系统组件也可能如此，需结合签名与场景判断"
+        },
+        {
+          "id": "handle.vm_write_remote",
+          "category": "handle",
+          "targetProcessPattern": "*DeltaForce*",
+          "accessMaskAny": [
+            "0x20"
+          ],
+          "severity": 4,
+          "confidence": 0.65,
+          "description": "进程以 VM_WRITE 打开了另一个进程（具备写入对方内存的能力）",
+          "advice": "正常软件极少需要 VM_WRITE 他人进程，优先复核"
+        },
+        {
+          "id": "handle.create_thread_remote",
+          "category": "handle",
+          "targetProcessPattern": "*DeltaForce*",
+          "accessMaskAny": [
+            "0x2"
+          ],
+          "severity": 4,
+          "confidence": 0.6,
+          "description": "进程以 CREATE_THREAD 打开了另一个进程（具备远程建线程的能力）"
+        }
+      ],
+      "holderWhitelist": [
+        "MsMpEng.exe",
+        "csrss.exe",
+        "services.exe",
+        "smss.exe",
+        "wininit.exe",
+        "lsass.exe",
+        "Taskmgr.exe",
+        "procexp*.exe",
+        "ProcessHacker*.exe",
+        "SystemSettings.exe",
+        "Registry",
+        "steam.exe",
+        "steamwebhelper.exe",
+        "EpicGamesLauncher.exe",
+        "UbisoftConnect.exe",
+        "Battle.net.exe",
+        "nvcontainer.exe",
+        "NVIDIA Overlay.exe",
+        "nvsphelper64.exe",
+        "Discord.exe",
+        "obs64.exe",
+        "Razer*.exe",
+        "ArmouryCrate.exe",
+        "wallpaper32.exe",
+        "wallpaper64.exe",
+        "SearchApp.exe",
+        "ShellExperienceHost.exe",
+        "ApplicationFrameHost.exe",
+        "dwm.exe",
+        "explorer.exe",
+        "conhost.exe",
+        "OpenConsole.exe",
+        "WindowsTerminal.exe",
+        "TextInputHost.exe",
+        "RuntimeBroker.exe",
+        "dllhost.exe",
+        "sihost.exe",
+        "StartMenuExperienceHost.exe",
+        "SearchHost.exe",
+        "Widgets.exe",
+        "msedgewebview2.exe",
+        "msedge.exe",
+        "chrome.exe",
+        "firefox.exe"
+      ],
+      "targetWhitelist": [
+        "csrss.exe",
+        "smss.exe",
+        "lsass.exe",
+        "wininit.exe",
+        "services.exe",
+        "System"
+      ]
+    },
+    "drivers": {
+      "enabled": true,
+      "rules": [
+        {
+          "id": "driver.dbk64",
+          "category": "driver",
+          "pattern": "dbk64.sys",
+          "severity": 5,
+          "confidence": 0.85,
+          "description": "Cheat Engine 内核驱动已加载（提供内存读写能力）",
+          "advice": "这是高风险信号，需立即人工复核"
+        },
+        {
+          "id": "driver.winio",
+          "category": "driver",
+          "pattern": "winio*.sys",
+          "severity": 4,
+          "confidence": 0.7,
+          "description": "WinIO 端口/内存读写驱动已加载"
+        },
+        {
+          "id": "driver.winring0",
+          "category": "driver",
+          "pattern": "winring0*.sys",
+          "severity": 4,
+          "confidence": 0.7,
+          "description": "WinRing0 硬件访问驱动已加载（常被外挂滥用）"
+        },
+        {
+          "id": "driver.inpout",
+          "category": "driver",
+          "pattern": "inpout*.sys",
+          "severity": 4,
+          "confidence": 0.65,
+          "description": "InpOut 端口读写驱动已加载"
+        },
+        {
+          "id": "driver.kdmapper",
+          "category": "driver",
+          "pattern": "kdmapper*.sys",
+          "severity": 5,
+          "confidence": 0.8,
+          "description": "驱动映射器已加载"
+        },
+        {
+          "id": "driver.kdmapper2",
+          "pattern": "kdmapper*.sys",
+          "severity": 5,
+          "confidence": 0.8,
+          "description": "驱动映射器已加载（用于加载未签名驱动）"
+        },
+        {
+          "id": "driver.easyanticheat_probe",
+          "pattern": "*cheat*driver*.sys",
+          "severity": 5,
+          "confidence": 0.75,
+          "description": "文件名含 cheat 的内核驱动已加载"
+        },
+        {
+          "id": "driver.hwaccess",
+          "pattern": "*hw*sys",
+          "severity": 3,
+          "confidence": 0.4,
+          "description": "硬件访问类驱动（需人工确认是否正常外设厂商组件）"
+        }
+      ],
+      "whitelistMode": true,
+      "untrustedSeverity": 3,
+      "untrustedConfidence": 0.45,
+      "trustedSigners": [
+        "Microsoft",
+        "NVIDIA",
+        "Advanced Micro Devices",
+        "AMD",
+        "Intel",
+        "Realtek",
+        "Tencent",
+        "EasyAntiCheat",
+        "BattlEye",
+        "ASUS",
+        "ASUSTeK",
+        "Logitech",
+        "Razer",
+        "Corsair",
+        "Creative",
+        "Samsung",
+        "Kingston",
+        "Western Digital",
+        "Marvell",
+        "Valve",
+        "VMware",
+        "雷神",
+        "Thunderobot",
+        "NetEase",
+        "网易",
+        "Whimsters",
+        "迅雷",
+        "Thunder",
+        "ShenZhen"
+      ]
+    },
+    "overlay": {
+      "enabled": true,
+      "minAreaRatio": 0.4,
+      "minWidth": 320,
+      "minHeight": 240,
+      "severity": 2,
+      "confidence": 0.45
+    },
+    "fileSignatures": {
+      "enabled": false,
+      "maxFiles": 2000,
+      "maxBytesPerFile": 2097152,
+      "includeExtensions": [
+        ".dll",
+        ".exe"
+      ],
+      "rules": [
+        {
+          "id": "sig.example.cheatengine",
+          "patternType": "ascii",
+          "pattern": "cheatengine",
+          "severity": 3,
+          "confidence": 0.5,
+          "enabled": false,
+          "description": "示例：文件内含 cheatengine 特征字符串（默认关闭）"
+        }
+      ]
+    },
+    "injection": {
+      "enabled": true,
+      "targetProcessPatterns": [
+        "*DeltaForce*"
+      ],
+      "moduleWhitelist": [],
+      "missingFileSeverity": 5,
+      "suspiciousPathSeverity": 4,
+      "unsignedSeverity": 2
+    }
+  },
+  "telemetry": {
+    "enabled": true,
+    "baseline": {
+      "preAimRatio": 0.12,
+      "reactionTimeP50Ms": 260,
+      "reactionTimeStdMs": 85,
+      "headshotRatio": 0.18,
+      "snapAngleMeanDeg": 25,
+      "trackingJitterPx": 3.5,
+      "accuracyLongRange": 0.22
+    },
+    "signals": [
+      {
+        "id": "tel.preaim",
+        "metric": "preAimRatio",
+        "comparator": "gte",
+        "threshold": 0.35,
+        "severity": 4,
+        "confidence": 0.6,
+        "description": "开镜前准星已稳定停在目标预设位置（隔墙预瞄，ESP / 视觉外挂的典型行为）",
+        "advice": "需要\"目标当时不可见\"的判定作为前提，避免赛事习惯性预瞄被误判"
+      },
+      {
+        "id": "tel.tracking_smooth",
+        "metric": "trackingJitterPx",
+        "comparator": "lte",
+        "threshold": 1.2,
+        "severity": 4,
+        "confidence": 0.55,
+        "description": "跟枪抖动低到接近完美平滑，人手难以稳定到这个水平"
+      },
+      {
+        "id": "tel.reaction_stable",
+        "metric": "reactionTimeStdMs",
+        "comparator": "lte",
+        "threshold": 35,
+        "severity": 3,
+        "confidence": 0.5,
+        "description": "反应时离散度异常小（人类有生理抖动，机器视觉更稳定）"
+      },
+      {
+        "id": "tel.reaction_fast",
+        "metric": "reactionTimeP50Ms",
+        "comparator": "lte",
+        "threshold": 170,
+        "severity": 3,
+        "confidence": 0.45,
+        "description": "中位反应时显著低于人群水平"
+      },
+      {
+        "id": "tel.headshot",
+        "metric": "headshotRatio",
+        "comparator": "gte",
+        "threshold": 0.45,
+        "severity": 3,
+        "confidence": 0.4,
+        "description": "爆头率显著高于人群水平"
+      },
+      {
+        "id": "tel.snap",
+        "metric": "snapAngleMeanDeg",
+        "comparator": "gte",
+        "threshold": 60,
+        "severity": 2,
+        "confidence": 0.35,
+        "description": "大角度瞬时转向（flick）占比偏高"
+      }
+    ],
+    "bothSidesLevel": "高度可疑"
+  }
+}

@@ -1,0 +1,39 @@
+# EagleEye 快速上手
+
+## 运行前
+
+1. 以【管理员身份】打开 PowerShell —— 否则游戏等受保护进程读不到
+2. 先跑环境自检，确认这台机器能查：
+
+       .\EagleEye.exe selftest
+
+   9 项全 PASS 才适合扫描；"管理员权限" 一项 FAIL 说明没提权。
+
+## 扫描
+
+    .\EagleEye.exe scan                  # 完整扫描（推荐）
+    .\EagleEye.exe scan --no-files        # 快扫（跳过文件遍历）
+    .\EagleEye.exe scan --profile deep    # 深扫（+文件特征码+行为统计）
+
+结果在 out\reports\（.json 与 .html），日志在 out\logs\，验签缓存在 out\cache\。
+
+## 规则
+
+exe 同目录的 rules\ 会自动全部加载并合并：
+
+    rules.json              主规则（18 条）
+    rules.delta-force.json  三角洲专项（20 条）
+    rules.intel.json        命名情报规则（75 条）
+
+新增规则：往 rules\ 里丢 json 即可，无需重编译。
+校验规则：.\EagleEye.exe validate
+
+## 判定口径
+
+本地最高只给"高度可疑"，且必须人工复核。
+双机 / 外部采集 / 硬件转发在本机不会留下痕迹 —— 这类只能靠游戏侧遥测。
+
+## 红线
+
+只读枚举：不注入、不读进程内存、不 Hook、不截屏、不联网。
+红线自检：powershell -File tools\audit-policy.ps1（18 项）

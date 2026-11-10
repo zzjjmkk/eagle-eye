@@ -1,0 +1,48 @@
+; PcieCfg.inf —— 只读 PCIe 配置空间枚举驱动
+; ServiceType = 1 (SERVICE_KERNEL_DRIVER)
+; StartType   = 3 (SERVICE_DEMAND_START)  ← 关键：绝不设成 0(自启) 或 1(系统)
+
+[Version]
+Signature="$WINDOWS NT$"
+Class=System
+ClassGuid={4d36e97d-e325-11ce-bfc1-08002be10318}
+Provider=%ProviderName%
+CatalogFile=PcieCfg.cat
+DriverVer=11/10/2026,1.0.0.0
+PnpLockdown=1
+
+[DestinationDirs]
+DefaultDestDir = 12
+
+[Manufacturer]
+%ProviderName%=PcieCfg,NTamd64
+
+[PcieCfg.NTamd64]
+; 纯 legacy 驱动，无硬件 ID，不需要 PnP 安装节
+
+[PcieCfg.NTamd64.Services]
+AddService=PcieCfg,0x00000002,PcieCfg.Service
+
+[PcieCfg.Service]
+DisplayName=%ServiceName%
+Description=%ServiceDesc%
+ServiceType=1
+StartType=3
+ErrorControl=1
+ServiceBinary=%12%\PcieCfg.sys
+
+; 支持右键"安装"（InstallHinfSection 路径），效果与上面一致：装服务、不启动
+[DefaultInstall.NTamd64]
+CopyFiles=PcieCfg.CopyFiles
+AddService=PcieCfg,0x00000002,PcieCfg.Service
+
+[DefaultInstall.NTamd64.Services]
+AddService=PcieCfg,0x00000002,PcieCfg.Service
+
+[PcieCfg.CopyFiles]
+PcieCfg.sys,,,0x00000002
+
+[Strings]
+ProviderName="Local Diagnostics"
+ServiceName="PcieCfg (One-shot PCIe Config Reader)"
+ServiceDesc="One-shot read-only PCIe configuration space reader. Demand start, unloaded by the caller after use."

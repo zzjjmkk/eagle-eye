@@ -1,0 +1,299 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "rules.schema.json",
+  "title": "AntiCheatProbe Rule Set",
+  "description": "本地反外挂查询工具规则集。只描述匹配条件与评分权重，不包含任何动作指令。",
+  "type": "object",
+  "required": ["meta", "settings", "process", "file", "dma", "whitelist"],
+  "additionalProperties": false,
+
+  "definitions": {
+    "severity": {
+      "type": "integer", "minimum": 1, "maximum": 5,
+      "description": "1=提示 2=低 3=中 4=高 5=确定"
+    },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "matchType": { "type": "string", "enum": ["exact", "glob", "regex", "contains"] },
+    "sha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+    "hex16": { "type": "string", "pattern": "^0[xX][0-9A-Fa-f]{4}$" },
+
+    "stringMatch": {
+      "type": "object",
+      "required": ["pattern"],
+      "properties": {
+        "pattern": { "type": "string", "minLength": 1 },
+        "match": { "$ref": "#/definitions/matchType", "default": "glob" },
+        "caseSensitive": { "type": "boolean", "default": false }
+      },
+      "additionalProperties": false
+    },
+
+    "ruleBase": {
+      "type": "object",
+      "required": ["id", "severity"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+$" },
+        "enabled": { "type": "boolean", "default": true },
+        "severity": { "$ref": "#/definitions/severity" },
+        "confidence": { "$ref": "#/definitions/confidence", "default": 0.7 },
+        "description": { "type": "string" },
+        "advice": { "type": "string", "description": "给人工复核的说明，写入报告" },
+        "tags": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+
+    "nameRule": {
+      "allOf": [{ "$ref": "#/definitions/ruleBase" }],
+      "properties": {
+        "match": { "$ref": "#/definitions/stringMatch" },
+        "category": { "type": "string", "description": "如 tool.cheatengine / tool.debugger / tool.macro" }
+      }
+    },
+
+    "pathRule": {
+      "allOf": [{ "$ref": "#/definitions/ruleBase" }],
+      "properties": {
+        "match": { "$ref": "#/definitions/stringMatch" },
+        "scope": { "type": "string", "enum": ["imagePath", "workingDirectory", "modulePath"], "default": "imagePath" }
+      }
+    },
+
+    "signatureRule": {
+      "allOf": [{ "$ref": "#/definitions/ruleBase" }],
+      "properties": {
+        "condition": {
+          "type": "string",
+          "enum": ["unsigned", "invalid-chain", "expired", "revoked", "catalog-only", "unknown-publisher", "timestamp-anomaly", "signer-blacklisted"]
+        },
+        "signerSubject": { "type": "string", "description": "condition=signer-blacklisted 时按证书 Subject 包含匹配" }
+      }
+    },
+
+    "portRule": {
+      "allOf": [{ "$ref": "#/definitions/ruleBase" }],
+      "properties": {
+        "protocol": { "type": "string", "enum": ["tcp", "udp"] },
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "state": { "type": "string", "enum": ["listen", "established"], "default": "listen" },
+        "requireProcessRule": { "type": "string", "description": "只有该进程规则同时命中才计分，用于组合信号" }
+      }
+    },
+
+    "compositeRule": {
+      "allOf": [{ "$ref": "#/definitions/ruleBase" }],
+      "properties": {
+        "allOf": { "type": "array", "items": { "type": "string" }, "minItems": 2 },
+        "anyOf": { "type": "array", "items": { "type": "string" } },
+        "noneOf": { "type": "array", "items": { "type": "string" } },
+        "boost": { "type": "number", "description": "命中后额外加的分值，默认 = severity*5" }
+      }
+    }
+  },
+
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["name", "version", "updated"],
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+        "updated": { "type": "string", "format": "date" },
+        "author": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+
+    "settings": {
+      "type": "object",
+      "required": ["thresholds"],
+      "properties": {
+        "thresholds": {
+          "type": "object",
+          "required": ["suspicious", "high"],
+          "properties": {
+            "suspicious": { "type": "integer", "minimum": 0, "maximum": 100, "default": 40 },
+            "high": { "type": "integer", "minimum": 0, "maximum": 100, "default": 70 }
+          },
+          "additionalProperties": false
+        },
+        "categoryWeights": {
+          "type": "object",
+          "additionalProperties": { "type": "number", "minimum": 0, "maximum": 5 }
+        },
+        "protectedProcessPolicy": {
+          "type": "string", "enum": ["skip", "minimal", "report-only"], "default": "minimal",
+          "description": "遇到受保护进程（PPL/反作弊）时的行为，默认只拿最小信息并注明"
+        },
+        "maxScanSeconds": { "type": "integer", "minimum": 1, "default": 120 },
+        "hashCacheEnabled": { "type": "boolean", "default": true },
+        "reportLanguage": { "type": "string", "enum": ["zh-CN", "en-US"], "default": "zh-CN" }
+      },
+      "additionalProperties": false
+    },
+
+    "process": {
+      "type": "object",
+      "properties": {
+        "nameRules": { "type": "array", "items": { "$ref": "#/definitions/nameRule" } },
+        "pathRules": { "type": "array", "items": { "$ref": "#/definitions/pathRule" } },
+        "commandLineRules": { "type": "array", "items": { "$ref": "#/definitions/nameRule" } },
+        "moduleRules": { "type": "array", "items": { "$ref": "#/definitions/nameRule" } },
+        "parentRules": {
+          "type": "array",
+          "items": {
+            "allOf": [{ "$ref": "#/definitions/ruleBase" }],
+            "properties": { "match": { "$ref": "#/definitions/stringMatch" } }
+          }
+        },
+        "signatureRules": { "type": "array", "items": { "$ref": "#/definitions/signatureRule" } },
+        "portRules": { "type": "array", "items": { "$ref": "#/definitions/portRule" } },
+        "compositeRules": { "type": "array", "items": { "$ref": "#/definitions/compositeRule" } }
+      },
+      "additionalProperties": false
+    },
+
+    "file": {
+      "type": "object",
+      "properties": {
+        "scanRoots": { "type": "array", "items": { "type": "string" } },
+        "includeExtensions": { "type": "array", "items": { "type": "string" } },
+        "excludeGlobs": { "type": "array", "items": { "type": "string" } },
+        "limits": {
+          "type": "object",
+          "properties": {
+            "maxFiles": { "type": "integer", "default": 200000 },
+            "maxDepth": { "type": "integer", "default": 8 },
+            "maxSizeMB": { "type": "integer", "default": 512 },
+            "maxFileAgeDays": { "type": "integer", "default": 0 }
+          },
+          "additionalProperties": false
+        },
+        "nameRules": { "type": "array", "items": { "$ref": "#/definitions/nameRule" } },
+        "hashRules": {
+          "type": "array",
+          "items": {
+            "allOf": [{ "$ref": "#/definitions/ruleBase" }],
+            "required": ["id", "severity", "sha256"],
+            "properties": {
+              "sha256": { "$ref": "#/definitions/sha256" },
+              "sizeBytes": { "type": "integer" },
+              "name": { "type": "string" },
+              "source": { "type": "string" }
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "dma": {
+      "type": "object",
+      "properties": {
+        "vidPidRules": {
+          "type": "array",
+          "items": {
+            "allOf": [{ "$ref": "#/definitions/ruleBase" }],
+            "required": ["id", "severity", "vendorId"],
+            "properties": {
+              "vendorId": { "$ref": "#/definitions/hex16" },
+              "deviceIds": { "type": "array", "items": { "$ref": "#/definitions/hex16" } },
+              "vendor": { "type": "string" },
+              "matchMode": { "type": "string", "enum": ["vendor-only", "exact", "list"], "default": "exact" }
+            }
+          }
+        },
+        "pcieAnomalyRules": {
+          "type": "array",
+          "items": {
+            "allOf": [{ "$ref": "#/definitions/ruleBase" }],
+            "required": ["id", "severity", "condition"],
+            "properties": {
+              "condition": {
+                "type": "string",
+                "enum": [
+                  "barSizeGreaterThan", "barSizeZero", "barCountGreaterThan",
+                  "classCodeEquals", "classCodeIn", "classCodeUnknown",
+                  "msiMissing", "msixMissing", "capabilityMissing",
+                  "revisionLessThan", "subsystemIdZero", "deviceIdFfff",
+                  "vendorIdFfff", "pathIsRootPort", "powerManagementAbsent"
+                ]
+              },
+              "value": {},
+              "appliesToVendorIds": { "type": "array", "items": { "$ref": "#/definitions/hex16" } }
+            }
+          }
+        },
+        "kernelEnum": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": false },
+            "requireKernelForConfigSpace": { "type": "boolean", "default": true },
+            "driverServiceName": { "type": "string", "default": "pcieenum" },
+            "devicePath": { "type": "string", "default": "\\\\.\\PcieEnum" },
+            "ioctlTimeoutMs": { "type": "integer", "default": 5000 },
+            "autoUnload": { "type": "boolean", "default": true },
+            "onLoadFailure": { "type": "string", "enum": ["degrade", "abort"], "default": "degrade" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "whitelist": {
+      "type": "object",
+      "properties": {
+        "processes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["match"],
+            "properties": {
+              "match": { "$ref": "#/definitions/stringMatch" },
+              "sha256": { "$ref": "#/definitions/sha256" },
+              "reason": { "type": "string" },
+              "expires": { "type": "string", "format": "date" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "signers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "subjectContains": { "type": "string" },
+              "thumbprint": { "type": "string" },
+              "reason": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": { "sha256": { "$ref": "#/definitions/sha256" }, "reason": { "type": "string" } },
+            "additionalProperties": false
+          }
+        },
+        "dma": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "vendorId": { "$ref": "#/definitions/hex16" },
+              "deviceId": { "$ref": "#/definitions/hex16" },
+              "reason": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "paths": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    }
+  }
+}
