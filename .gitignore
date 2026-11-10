@@ -1,0 +1,18 @@
+# 构建产物
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# 运行产物（报告、日志、缓存）
+out/
+dist/
+
+# 本机调参产物
+rules/tuning.suggested.json
+
+# 临时
+*.tmp
+*.log
+Thumbs.db
